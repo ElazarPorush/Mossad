@@ -7,9 +7,9 @@ namespace MossadAPI.Models
     {
         [Key]
         public Guid? ID { get; set; }
-        public string Photo_url { get; set; }
-        public string Nickname { get; set; }
-        public Location? Location { get; set; }
-        public StatusAgent? Status { get; set; }
+        public string photo_url { get; set; }
+        public string nickname { get; set; }
+        public int? Location { get; set; }
+        public StatusAgent? status { get; set; }
     }
 }

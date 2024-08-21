@@ -11,6 +11,6 @@ namespace MossadAPI.Models
         [Range(0, 40)]
         public Double? TimeLeft { get; set; }
         public StatusMission Status { get; set; }
-        public DateTime? ExecutionTime { get; set; }
+        public Double? ExecutionTime { get; set; }
     }
 }

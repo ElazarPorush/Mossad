@@ -24,7 +24,7 @@ namespace MossadAPI.Controllers
         public IActionResult Create(Agent agent)
         {
             agent.ID = Guid.NewGuid();
-            agent.Status = StatusAgent.Dormant;
+            agent.status = StatusAgent.Dormant;
             _context.Agents.Add(agent);
             _context.SaveChanges();
             return Ok(agent.ID);
@@ -33,9 +33,9 @@ namespace MossadAPI.Controllers
         [HttpGet]
         public IActionResult GetAll()
         {
-            var attacks = _context.Agents.ToArray();
+            var agents = _context.Agents.ToArray();
             return Ok(
-                attacks
+                agents
                 );
         }
 
@@ -45,21 +45,46 @@ namespace MossadAPI.Controllers
             Agent? agent = _context.Agents.FirstOrDefault(agent => agent.ID == id);
             if (agent != null)
             {
-                if (agent.Location != null)
-                {
-                    Location? newLocation = _context.Locations.FirstOrDefault(newLocation => newLocation.Id == agent.Location.Id);
-                    _context.Locations.Remove(newLocation);
-                }
-                agent.Location = location;
                 _context.Locations.Add(location);
                 _context.SaveChanges();
+                agent.Location = location.Id;
+                _context.SaveChanges();
+
                 return Ok();
             }
             else
             {
                 return NotFound();
+            }  
+        }
+
+
+        [HttpPut("{id}/move")]
+        public IActionResult Move(Direction direction , Guid id)
+        {
+            Agent? agent = _context.Agents.FirstOrDefault(agent => agent.ID == id);
+            if (agent != null)
+            {
+                Location? location = _context.Locations.FirstOrDefault(location => location.Id == agent.Location);
+                if (location != null)
+                {
+                    Location tmpLocation = ChangeLocation.Move(direction, location);
+                    location.X = tmpLocation.X;
+                    location.Y = tmpLocation.Y;
+                    _context.Update(location);
+                    _context.SaveChanges();
+                    return Ok();
+                }
+                else
+                {
+                    return NotFound();
+                }
             }
-            
+            else
+            {
+                return NotFound();
+            }
+
         }
 
     }
