@@ -21,6 +21,7 @@ namespace MossadAPI.Controllers
         public IActionResult CreateAgent(Agent agent)
         {
             agent.ID = Guid.NewGuid();
+
             agent.Status = StatusAgent.Dormant;
             Location location =  new Location(5, 13);
             _context.Locations.Add(location);
