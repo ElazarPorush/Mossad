@@ -13,8 +13,10 @@ builder.Services.AddSwaggerGen();
 
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<MossadDBContext>(options => options.UseSqlServer(connectionString));
+
 builder.Services.AddScoped<MissionForAgent>();
 builder.Services.AddScoped<MissionForTarget>();
+builder.Services.AddScoped<MissionBase>();
 
 var app = builder.Build();
 

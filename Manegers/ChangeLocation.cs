@@ -57,6 +57,31 @@ namespace MossadAPI.Manegers
             return location;
 
         }
+
+        public static Location GoToTarget(Location agentLocation, Location targetLocation)
+        {
+            Direction direction = new Direction();
+            if (agentLocation.X > targetLocation.X)
+            {
+                if (agentLocation.Y > targetLocation.Y) { direction = Direction.}
+                else if (agentLocation.Y < targetLocation.Y) { direction = Direction. }
+                else if (agentLocation == targetLocation) { direction = Direction. }
+            }
+            else if (agentLocation.X < targetLocation.X)
+            {
+                if (agentLocation.Y > targetLocation.Y) { direction = Direction. }
+                else if (agentLocation.Y < targetLocation.Y) { direction = Direction. }
+                else if (agentLocation == targetLocation) { direction = Direction. }
+            }
+            else if (agentLocation == targetLocation)
+            {
+                if (agentLocation.Y > targetLocation.Y) { direction = Direction. }
+                else if (agentLocation.Y < targetLocation.Y) { direction = Direction. }
+                else if (agentLocation == targetLocation) { direction = Direction. }
+            }
+            return Move(direction, agentLocation);
+        }
+
         private static bool InRange(int num)
         {
             if (num > 0 && num < 1000)
@@ -68,7 +93,7 @@ namespace MossadAPI.Manegers
 
         private static int Add(int num)
         {
-            if (InRange(num))
+            if (num < 1000)
             {
                 num += 1;
             }
@@ -76,7 +101,7 @@ namespace MossadAPI.Manegers
         }
         private static int Reduce(int num)
         {
-            if (InRange(num))
+            if (num > 0)
             {
                 num -= 1;
             }
