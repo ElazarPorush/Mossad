@@ -3,7 +3,7 @@
     public enum StatusMission
     {
         Suggestion,
-        Active,
+        Assigned,
         Completed
     }
 }

@@ -6,14 +6,16 @@ using MossadAPI.Models;
 
 namespace MossadAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("/[controller]")]
     [ApiController]
     public class TargetsController : ControllerBase
     {
         private readonly MossadDBContext _context;
-        public TargetsController(MossadDBContext context)
+        private readonly MissionForTarget MissionForTarget;
+        public TargetsController(MossadDBContext context, MissionForTarget missionForTarget)
         {
             _context = context;
+            MissionForTarget = missionForTarget;
         }
 
         [HttpPost]
@@ -38,16 +40,17 @@ namespace MossadAPI.Controllers
         }
 
         [HttpPut("{id}/pin")]
-        public IActionResult PutLocation(Location location, Guid id)
+        public async Task<IActionResult> PutLocation(Location location, Guid id)
         {
             Target? target = _context.Targets.FirstOrDefault(target => target.ID == id);
             if (target != null)
             {
                 _context.Locations.Add(location);
                 _context.SaveChanges();
-                target.Location = location.Id;
+                target.locationID = location.Id;
                 _context.SaveChanges();
-
+                await MissionForTarget.DeleteOldMissions();
+                await MissionForTarget.SearchMissions(target);
                 return Ok();
             }
             else
@@ -57,12 +60,12 @@ namespace MossadAPI.Controllers
         }
 
         [HttpPut("{id}/move")]
-        public IActionResult Move(Direction direction, Guid id)
+        public async Task<IActionResult> Move(Direction direction, Guid id)
         {
             Target? target = _context.Targets.FirstOrDefault(target => target.ID == id);
             if (target != null)
             {
-                Location? location = _context.Locations.FirstOrDefault(location => location.Id == target.Location);
+                Location? location = _context.Locations.FirstOrDefault(location => location.Id == target.locationID);
                 if (location != null)
                 {
                     Location tmpLocation = ChangeLocation.Move(direction, location);
@@ -70,6 +73,8 @@ namespace MossadAPI.Controllers
                     location.Y = tmpLocation.Y;
                     _context.Update(location);
                     _context.SaveChanges();
+                    await MissionForTarget.DeleteOldMissions();
+                    await MissionForTarget.SearchMissions(target);
                     return Ok();
                 }
                 else

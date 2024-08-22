@@ -5,18 +5,23 @@ using MossadAPI.Manegers;
 using MossadAPI.Models;
 using System.Net.NetworkInformation;
 using Newtonsoft.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace MossadAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("/[controller]")]
     [ApiController]
     public class AgentsController : ControllerBase
     {
+        
         private readonly MossadDBContext _context;
-        public AgentsController(MossadDBContext context)
+        private readonly MissionForAgent MissionForAgent;
+        public AgentsController(MossadDBContext context, MissionForAgent missionForAgent)
         {
             _context = context;
+            MissionForAgent = missionForAgent;
         }
+        
 
         [HttpPost]
         [Produces("application/json")]
@@ -27,29 +32,27 @@ namespace MossadAPI.Controllers
             agent.status = StatusAgent.Dormant;
             _context.Agents.Add(agent);
             _context.SaveChanges();
-            return Ok(agent.ID);
+            return StatusCode(StatusCodes.Status201Created, agent.ID);
         }
 
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            var agents = _context.Agents.ToArray();
-            return Ok(
-                agents
-                );
+            return Ok(await _context.Agents.ToListAsync());
         }
 
         [HttpPut("{id}/pin")]
-        public IActionResult PutLocation(Location location, Guid id)
+        public async Task< IActionResult> PutLocation(Location location, Guid id)
         {
             Agent? agent = _context.Agents.FirstOrDefault(agent => agent.ID == id);
             if (agent != null)
             {
                 _context.Locations.Add(location);
                 _context.SaveChanges();
-                agent.Location = location.Id;
+                agent.locationID = location.Id;
                 _context.SaveChanges();
-
+                await MissionForAgent.DeleteOldMissions();
+                await MissionForAgent.SearchMissions(agent);
                 return Ok();
             }
             else
@@ -60,12 +63,16 @@ namespace MossadAPI.Controllers
 
 
         [HttpPut("{id}/move")]
-        public IActionResult Move(Direction direction , Guid id)
+        public async Task<IActionResult> Move(Direction direction , Guid id)
         {
             Agent? agent = _context.Agents.FirstOrDefault(agent => agent.ID == id);
             if (agent != null)
             {
-                Location? location = _context.Locations.FirstOrDefault(location => location.Id == agent.Location);
+                if (agent.status != StatusAgent.Dormant)
+                {
+                    return NotFound("The Agent is in active mission");
+                }
+                Location? location = _context.Locations.FirstOrDefault(location => location.Id == agent.locationID);
                 if (location != null)
                 {
                     Location tmpLocation = ChangeLocation.Move(direction, location);
@@ -73,11 +80,13 @@ namespace MossadAPI.Controllers
                     location.Y = tmpLocation.Y;
                     _context.Update(location);
                     _context.SaveChanges();
+                    await MissionForAgent.DeleteOldMissions();
+                    await MissionForAgent.SearchMissions(agent);
                     return Ok();
                 }
                 else
                 {
-                    return NotFound();
+                    return BadRequest();
                 }
             }
             else

@@ -6,11 +6,11 @@ namespace MossadAPI.Models
     public class Target
     {
         [Key]
-        public Guid? ID { get; set; }
-        public string name { get; set; }
-        public string position { get; set; }
-        public string photo_url { get; set; }
-        public int? Location { get; set; }
+        public Guid ID { get; set; }
+        public string Name { get; set; }
+        public string Position { get; set; }
+        public string PhotoUrl { get; set; }
+        public int? locationID { get; set; }
         public StatusTarget? status { get; set; }
     }
 }

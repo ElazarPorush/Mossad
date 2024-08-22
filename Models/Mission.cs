@@ -6,8 +6,8 @@ namespace MossadAPI.Models
     {
         [Key]
         public int Id { get; set; }
-        public Agent Agent { get; set; }
-        public Target Target { get; set; }
+        public Guid agentID { get; set; }
+        public Guid targetID { get; set; }
         [Range(0, 40)]
         public Double? TimeLeft { get; set; }
         public StatusMission Status { get; set; }
