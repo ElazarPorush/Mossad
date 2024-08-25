@@ -27,8 +27,10 @@ namespace MossadAPI.Manegers
                 }
                 if (IsNear(agentLocation, targetLocation) && await IsAvailble(target))
                 {
-                    await CreateMission(agent, target);
-                    //onMassage
+                    if (await IsAlreadyExicte(agent, target) == false)
+                    {
+                        await CreateMission(agent, target);
+                    }
                 }
             }
         }

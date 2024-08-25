@@ -60,26 +60,23 @@ namespace MossadAPI.Manegers
 
         public static Location GoToTarget(Location agentLocation, Location targetLocation)
         {
-            Direction direction = new Direction();
             if (agentLocation.X > targetLocation.X)
             {
-                if (agentLocation.Y > targetLocation.Y) { direction = Direction.}
-                else if (agentLocation.Y < targetLocation.Y) { direction = Direction. }
-                else if (agentLocation == targetLocation) { direction = Direction. }
+                agentLocation.X -= 1;
             }
             else if (agentLocation.X < targetLocation.X)
             {
-                if (agentLocation.Y > targetLocation.Y) { direction = Direction. }
-                else if (agentLocation.Y < targetLocation.Y) { direction = Direction. }
-                else if (agentLocation == targetLocation) { direction = Direction. }
+                agentLocation.X += 1;
             }
-            else if (agentLocation == targetLocation)
+            if (agentLocation.Y > targetLocation.Y)
             {
-                if (agentLocation.Y > targetLocation.Y) { direction = Direction. }
-                else if (agentLocation.Y < targetLocation.Y) { direction = Direction. }
-                else if (agentLocation == targetLocation) { direction = Direction. }
+                agentLocation.Y -= 1;
             }
-            return Move(direction, agentLocation);
+            else if (agentLocation.Y < targetLocation.Y)
+            {
+                agentLocation.Y += 1;
+            }
+            return agentLocation;
         }
 
         private static bool InRange(int num)

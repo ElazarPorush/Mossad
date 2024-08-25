@@ -29,7 +29,7 @@ namespace MossadAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutStatus(Guid id, StatusMission statusMission)
+        public async Task<IActionResult> PutStatus(int id, StatusMission statusMission)
         {
             await _missionManeger.DeleteOldMissions();
             await _missionManeger.DeleteMissionIfIsNotRelevant(id);
@@ -39,7 +39,7 @@ namespace MossadAPI.Controllers
                 return NotFound("The mission is not relevant");
             }
             mission.TimeLeft = await _missionManeger.PutTimeLeft(mission);
-            mission.Status = statusMission;
+            mission.Status = StatusMission.Assigned;
             Agent? agent = await _context.Agents.FindAsync(mission.agentID);
             agent.status = StatusAgent.InActivity;
             _context.SaveChanges();
@@ -49,14 +49,17 @@ namespace MossadAPI.Controllers
         [HttpPost("update")]
         public async Task<IActionResult> UpdateMissions()
         {
-            foreach (Mission mission in _context.Missions)
-            {
+            var missions = await _context.Missions.ToListAsync();
+            foreach (Mission mission in missions)
+            { 
                 if (mission.Status == StatusMission.Assigned)
                 {
-
+                    mission.TimeLeft = await _missionManeger.PutTimeLeft(mission);
                     if (await _missionManeger.TheyMeet(mission.agentID, mission.targetID))
                     {
                         await _missionManeger.KillTarget(mission);
+                        _context.SaveChanges();
+                        return Ok("mission completed");
                     }
                     else
                     {
@@ -67,10 +70,12 @@ namespace MossadAPI.Controllers
                         Location tmpLocation = ChangeLocation.GoToTarget(agentLocation, targetLocation);
                         agentLocation.X = tmpLocation.X;
                         agentLocation.Y = tmpLocation.Y;
-
+                        _context.Update(agentLocation);
+                        _context.SaveChanges();
                     }
                 }
             }
+            return Ok();
         }
 
         

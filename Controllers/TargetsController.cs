@@ -23,7 +23,6 @@ namespace MossadAPI.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         public IActionResult Create(Target target)
         {
-            target.ID = Guid.NewGuid();
             target.status = StatusTarget.Live;
             _context.Targets.Add(target);
             _context.SaveChanges();
@@ -40,7 +39,7 @@ namespace MossadAPI.Controllers
         }
 
         [HttpPut("{id}/pin")]
-        public async Task<IActionResult> PutLocation(Location location, Guid id)
+        public async Task<IActionResult> PutLocation(Location location, int id)
         {
             Target? target = _context.Targets.FirstOrDefault(target => target.ID == id);
             if (target != null)
@@ -60,7 +59,7 @@ namespace MossadAPI.Controllers
         }
 
         [HttpPut("{id}/move")]
-        public async Task<IActionResult> Move(Direction direction, Guid id)
+        public async Task<IActionResult> Move(Direction direction, int id)
         {
             Target? target = _context.Targets.FirstOrDefault(target => target.ID == id);
             if (target != null)

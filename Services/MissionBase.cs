@@ -27,7 +27,7 @@ namespace MossadAPI.Manegers
             }
         }
 
-        public async Task DeleteMissionIfIsNotRelevant(Guid id)
+        public async Task DeleteMissionIfIsNotRelevant(int id)
         {
             Mission? theMission = await _context.Missions.FindAsync(id);
             if (theMission != null)
@@ -71,7 +71,7 @@ namespace MossadAPI.Manegers
             _context.SaveChanges();
         }
 
-        public async Task<bool> TheyMeet(Guid agentID, Guid targetID)
+        public async Task<bool> TheyMeet(int agentID, int targetID)
         {
             Agent? agent = await _context.Agents.FindAsync(agentID);
             Target? target = await _context.Targets.FindAsync(targetID);
@@ -91,6 +91,7 @@ namespace MossadAPI.Manegers
             agent.status = StatusAgent.Dormant;
             target.status = StatusTarget.Eliminated;
             mission.Status = StatusMission.Completed;
+            //mission.ExecutionTime == 
         }
 
         public async Task<Double> PutTimeLeft(Mission mission)
@@ -100,6 +101,18 @@ namespace MossadAPI.Manegers
             Location? agentLocation = await _context.Locations.FindAsync(agent.locationID);
             Location? targetLocation = await _context.Locations.FindAsync(target.locationID);
             return GetDistence(agentLocation, targetLocation);
+        }
+
+        public async Task<bool> IsAlreadyExicte(Agent agent , Target target)
+        {
+            await foreach (Mission mission in  _context.Missions)
+            {
+                if (mission.agentID == agent.ID && mission.targetID == target.ID)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
