@@ -1,6 +1,7 @@
 using MossadAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using MossadAPI.Manegers;
+using MossadAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,7 @@ builder.Services.AddDbContext<MossadDBContext>(options => options.UseSqlServer(c
 builder.Services.AddScoped<MissionForAgent>();
 builder.Services.AddScoped<MissionForTarget>();
 builder.Services.AddScoped<MissionBase>();
+builder.Services.AddScoped<ViewMissions>();
 
 var app = builder.Build();
 

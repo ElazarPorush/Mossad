@@ -21,8 +21,8 @@ namespace MossadAPI.Controllers
             _context = context;
             MissionForAgent = missionForAgent;
         }
-        
 
+        //create new agent
         [HttpPost]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -34,12 +34,14 @@ namespace MossadAPI.Controllers
             return StatusCode(StatusCodes.Status201Created, agent.ID);
         }
 
+        //get all agents
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             return Ok(await _context.Agents.ToListAsync());
         }
 
+        //update agent's location and create new mission 
         [HttpPut("{id}/pin")]
         public async Task< IActionResult> PutLocation(Location location, int id)
         {
@@ -50,7 +52,9 @@ namespace MossadAPI.Controllers
                 _context.SaveChanges();
                 agent.locationID = location.Id;
                 _context.SaveChanges();
+                //delete from DB old missions before create new mission
                 await MissionForAgent.DeleteOldMissions();
+                //search for target in the area and create new missions if you find one relevante
                 await MissionForAgent.SearchMissions(agent);
                 return Ok();
             }
@@ -60,13 +64,14 @@ namespace MossadAPI.Controllers
             }  
         }
 
-
+        //move agent to random spot and create new mission
         [HttpPut("{id}/move")]
         public async Task<IActionResult> Move(Direction direction , int id)
         {
             Agent? agent = _context.Agents.FirstOrDefault(agent => agent.ID == id);
             if (agent != null)
             {
+                //chack if the agent not already in active mission
                 if (agent.status != StatusAgent.Dormant)
                 {
                     return NotFound("The Agent is in active mission");
@@ -79,7 +84,9 @@ namespace MossadAPI.Controllers
                     location.Y = tmpLocation.Y;
                     _context.Update(location);
                     _context.SaveChanges();
+                    //delete from DB old missions before create new mission
                     await MissionForAgent.DeleteOldMissions();
+                    //search for target in the area and create new missions if you find one relevante
                     await MissionForAgent.SearchMissions(agent);
                     return Ok();
                 }

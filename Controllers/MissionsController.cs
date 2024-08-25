@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MossadAPI.Data;
+using MossadAPI.Services;
 using MossadAPI.Manegers;
 using MossadAPI.Models;
 using System.ComponentModel;
@@ -16,6 +17,7 @@ namespace MossadAPI.Controllers
     {
         private readonly MossadDBContext _context;
         private readonly MissionBase _missionManeger;
+        
         public MissionsController(MossadDBContext context, MissionBase missionManeger)
         {
             _context = context;
@@ -77,7 +79,5 @@ namespace MossadAPI.Controllers
             }
             return Ok();
         }
-
-        
     }
 }

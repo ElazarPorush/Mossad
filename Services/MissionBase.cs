@@ -65,10 +65,13 @@ namespace MossadAPI.Manegers
             {
                 agentID = agent.ID,
                 targetID = target.ID,
-                Status = StatusMission.Suggestion
+                Status = StatusMission.Suggestion,
             };
             _context.Missions.Add(mission);
             _context.SaveChanges();
+            mission.TimeLeft = await PutTimeLeft(mission);
+            _context.SaveChanges();
+
         }
 
         public async Task<bool> TheyMeet(int agentID, int targetID)

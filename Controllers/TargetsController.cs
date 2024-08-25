@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MossadAPI.Data;
 using MossadAPI.Manegers;
 using MossadAPI.Models;
@@ -18,6 +19,7 @@ namespace MossadAPI.Controllers
             MissionForTarget = missionForTarget;
         }
 
+        //create new target
         [HttpPost]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -29,15 +31,14 @@ namespace MossadAPI.Controllers
             return Ok(target.ID);
         }
 
+        //get all targets
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            var targets = _context.Targets.ToArray();
-            return Ok(
-                targets
-                );
+            return Ok(await _context.Targets.ToListAsync());
         }
 
+        //update target's location and create new mission
         [HttpPut("{id}/pin")]
         public async Task<IActionResult> PutLocation(Location location, int id)
         {
@@ -48,7 +49,9 @@ namespace MossadAPI.Controllers
                 _context.SaveChanges();
                 target.locationID = location.Id;
                 _context.SaveChanges();
+                //delete from DB old missions before create new mission
                 await MissionForTarget.DeleteOldMissions();
+                //search for agent in the area and create new missions if you find one relevante
                 await MissionForTarget.SearchMissions(target);
                 return Ok();
             }
