@@ -37,5 +37,13 @@ namespace MossadAPI.Controllers
             SuggestionView suggestion = await _viewMissions.GetSuggestionsByID(id);
             return Ok(suggestion);
         }
+
+        //get all details on this projekt
+        [HttpGet("mossad")]
+        public async Task<IActionResult> GetDetailsMossad()
+        {
+            MossadView mossad = await _viewMissions.GetDetailsOfMossad();
+            return Ok(mossad);
+        }
     }
 }

@@ -64,5 +64,35 @@ namespace MossadAPI.Services
             };
             return suggestion;
         }
+
+        public async Task<MossadView> GetDetailsOfMossad()
+        {
+            MossadView mossadView = new MossadView
+            {
+                TotalAgents = await _context.Agents.CountAsync(),
+                TotalAgentsActivate = await _context.Agents.CountAsync(agent => agent.status == StatusAgent.InActivity),
+                TotalTargets = await _context.Targets.CountAsync(),
+                TotalTargetsDead = await _context.Targets.CountAsync(target => target.status == StatusTarget.Eliminated),
+                TotalMissions = await _context.Missions.CountAsync(),
+                TotalMissionsActivate = await _context.Missions.CountAsync(mission => mission.Status == StatusMission.Assigned)
+            };
+            mossadView.AgentsToTargets = mossadView.TotalAgents / mossadView.TotalTargets;
+            var agents = await _context.Agents.ToArrayAsync();
+            var missions = await _context.Missions.ToArrayAsync();
+            int suggestionsAgentsToTargets = 0;
+            foreach (Agent agent in agents)
+            {
+                if (agent.status == StatusAgent.Dormant)
+                {
+                    Mission? mission = await _context.Missions.FirstOrDefaultAsync(mission => mission.agentID == agent.ID);
+                    if (mission != null)
+                    {
+                        suggestionsAgentsToTargets++;
+                    }
+                }
+            }
+            mossadView.SuggestionsAgentsToTargets = suggestionsAgentsToTargets / mossadView.TotalTargets;
+            return mossadView;
+        }
     }
 }
