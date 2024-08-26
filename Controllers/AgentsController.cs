@@ -6,6 +6,7 @@ using MossadAPI.Models;
 using System.Net.NetworkInformation;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace MossadAPI.Controllers
 {
@@ -62,10 +63,10 @@ namespace MossadAPI.Controllers
                 return NotFound();
             }  
         }
-
+        
         //move agent to random spot and create new mission
         [HttpPut("{id}/move")]
-        public async Task<IActionResult> Move(Direction direction , int id)
+        public async Task<IActionResult> Move([FromBody] Direction direction, int id)
         {
             Agent? agent = _context.Agents.Include(agent => agent.location).FirstOrDefault(agent => agent.ID == id);
             if (agent != null)
@@ -79,6 +80,11 @@ namespace MossadAPI.Controllers
                 if (location != null)
                 {
                     Location tmpLocation = ChangeLocation.Move(direction, location);
+                    
+                    if (!ChangeLocation.InRange(tmpLocation.X) || !ChangeLocation.InRange(tmpLocation.Y))
+                    {
+                        return BadRequest(new {location.X, location.Y});
+                    }
                     location.X = tmpLocation.X;
                     location.Y = tmpLocation.Y;
                     _context.Update(location);
