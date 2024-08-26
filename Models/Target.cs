@@ -7,10 +7,10 @@ namespace MossadAPI.Models
     {
         [Key]
         public int ID { get; set; }
-        public string Name { get; set; }
-        public string Position { get; set; }
-        public string PhotoUrl { get; set; }
-        public int? locationID { get; set; }
+        public string name { get; set; }
+        public string position { get; set; }
+        public string photoUrl { get; set; }
+        public Location? location { get; set; } = new Location();
         public StatusTarget? status { get; set; }
     }
 }

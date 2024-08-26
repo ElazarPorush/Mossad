@@ -18,22 +18,20 @@ namespace MossadAPI.Services
         public async Task<List<SuggestionView>> GetSuggestions()
         {
             List<SuggestionView> suggestions = new List<SuggestionView>();
-            var missions = await _context.Missions.ToListAsync();
+            var missions = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).Include(mission => mission.agent.location).Include(mission => mission.target.location).ToListAsync();
             foreach (Mission mission in missions)
             {
                 if (mission.Status == StatusMission.Suggestion)
                 {
-                    Agent? agent = await _context.Agents.FindAsync(mission.agentID);
-                    Target? target = await _context.Targets.FindAsync(mission.targetID);
-                    Location? agentLocation = await _context.Locations.FindAsync(agent.locationID);
-                    Location? targetLocation = await _context.Locations.FindAsync(target.locationID);
+                    Location? agentLocation = mission.agent.location;
+                    Location? targetLocation = mission.target.location;
                     SuggestionView suggestion = new SuggestionView
                     {
                         MissionID = mission.Id,
-                        AgentNickname = agent.Nickname,
+                        AgentNickname = mission.agent.nickname,
                         AgentLocation = $"X: {agentLocation.X}, Y: {agentLocation.Y}",
-                        TargetName = target.Name,
-                        TargetPosition = target.Position,
+                        TargetName = mission.target.name,
+                        TargetPosition = mission.target.position,
                         TargetLocation = $"X: {targetLocation.X}, Y: {targetLocation.Y}",
                         Distance = GetDistence(agentLocation, targetLocation),
                         TimeLeft = mission.TimeLeft,
@@ -46,18 +44,19 @@ namespace MossadAPI.Services
 
         public async Task<SuggestionView> GetSuggestionsByID(int id)
         {
-            Mission? mission = await _context.Missions.FindAsync(id);
-            Agent? agent = await _context.Agents.FindAsync(mission.agentID);
-            Target? target = await _context.Targets.FindAsync(mission.targetID);
-            Location? agentLocation = await _context.Locations.FindAsync(agent.locationID);
-            Location? targetLocation = await _context.Locations.FindAsync(target.locationID);
+            Mission? mission = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).Include(mission => mission.agent.location).Include(mission => mission.target.location).FirstOrDefaultAsync(mission => mission.Id == id);
+            if (mission == null) { return null; }
+
+            Location? agentLocation = mission.agent.location;
+            Location? targetLocation = mission.target.location;
+
             SuggestionView suggestion = new SuggestionView
             {
                 MissionID = mission.Id,
-                AgentNickname = agent.Nickname,
+                AgentNickname = mission.agent.nickname,
                 AgentLocation = $"X: {agentLocation.X}, Y: {agentLocation.Y}",
-                TargetName = target.Name,
-                TargetPosition = target.Position,
+                TargetName = mission.target.name,
+                TargetPosition = mission.target.position,
                 TargetLocation = $"X: {targetLocation.X}, Y: {targetLocation.Y}",
                 Distance = GetDistence(agentLocation, targetLocation),
                 TimeLeft = mission.TimeLeft,
@@ -77,22 +76,79 @@ namespace MossadAPI.Services
                 TotalMissionsActivate = await _context.Missions.CountAsync(mission => mission.Status == StatusMission.Assigned)
             };
             mossadView.AgentsToTargets = mossadView.TotalAgents / mossadView.TotalTargets;
+            
             var agents = await _context.Agents.ToArrayAsync();
-            var missions = await _context.Missions.ToArrayAsync();
-            int suggestionsAgentsToTargets = 0;
+            int count = 0;
             foreach (Agent agent in agents)
             {
                 if (agent.status == StatusAgent.Dormant)
                 {
-                    Mission? mission = await _context.Missions.FirstOrDefaultAsync(mission => mission.agentID == agent.ID);
+                    Mission? mission = await _context.Missions.FirstOrDefaultAsync(mission => mission.agent.ID == agent.ID);
                     if (mission != null)
                     {
-                        suggestionsAgentsToTargets++;
+                        count++;
                     }
                 }
             }
-            mossadView.SuggestionsAgentsToTargets = suggestionsAgentsToTargets / mossadView.TotalTargets;
+            mossadView.SAgentsToTargets = count / mossadView.TotalTargets;
             return mossadView;
+        }
+
+        public async Task<List<AgentView>> GetAgents()
+        {
+            List<AgentView> agentsView = new List<AgentView>();
+            var agents = _context.Agents.Include(agent => agent.location).ToArray();
+            foreach (Agent agent in agents)
+            {
+                AgentView agentView = new AgentView
+                {
+                    ID = agent.ID,
+                    PhotoUrl = agent.photoUrl,
+                    Nickname = agent.nickname,
+                    StatusAgent = agent.status,
+                };
+                Location? location = agent.location;
+                if (location != null)
+                {
+                    agentView.Location = $"X: {location.X}, Y: {location.Y}";
+                }
+                if (agent.status == StatusAgent.InActivity)
+                {
+                    Mission? mission = await _context.Missions.FirstOrDefaultAsync(mission => mission.agent.ID == agent.ID && mission.Status == StatusMission.Assigned);
+                    if (mission != null)
+                    {
+                        agentView.MissionID = mission.Id;
+                        agentView.TimeLeft = mission.TimeLeft;
+                    }
+                }
+                agentView.Kills = await _context.Missions.CountAsync(mission => mission.agent.ID == agent.ID && mission.Status == StatusMission.Completed);
+                agentsView.Add(agentView);
+            }
+            return agentsView;
+        }
+
+        public async Task<List<TargetView>> GetTargets()
+        {
+            List<TargetView> targetsView = new List<TargetView>();
+            var targets = _context.Targets.Include(target => target.location).ToArray();
+            foreach (Target target in targets)
+            {
+                TargetView targetView = new TargetView
+                {
+                    Id = target.ID,
+                    Name = target.name,
+                    Position = target.position,
+                    PhotoUrl = target.photoUrl,
+                    StatusTarget = target.status,
+                };
+                Location? location = target.location;
+                if (location != null)
+                {
+                    targetView.Location = $"X: {location.X}, Y: {location.Y}";
+                }
+                targetsView.Add(targetView);
+            }
+            return targetsView;
         }
     }
 }

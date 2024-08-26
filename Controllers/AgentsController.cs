@@ -26,12 +26,12 @@ namespace MossadAPI.Controllers
         [HttpPost]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        public IActionResult Create(Agent agent)
+        public async Task< IActionResult> Create(Agent agent)
         {
             agent.status = StatusAgent.Dormant;
-            _context.Agents.Add(agent);
-            _context.SaveChanges();
-            return StatusCode(StatusCodes.Status201Created, agent.ID);
+            await _context.Agents.AddAsync(agent);
+            await _context.SaveChangesAsync();
+            return Ok( new { agent.ID });
         }
 
         //get all agents
@@ -45,13 +45,12 @@ namespace MossadAPI.Controllers
         [HttpPut("{id}/pin")]
         public async Task< IActionResult> PutLocation(Location location, int id)
         {
-            Agent? agent = _context.Agents.FirstOrDefault(agent => agent.ID == id);
+            Agent? agent = _context.Agents.Include(agent => agent.location).FirstOrDefault(agent => agent.ID == id);
             if (agent != null)
             {
-                _context.Locations.Add(location);
-                _context.SaveChanges();
-                agent.locationID = location.Id;
-                _context.SaveChanges();
+                agent.location = location;
+                await _context.Locations.AddAsync(location);
+                await _context.SaveChangesAsync();
                 //delete from DB old missions before create new mission
                 await MissionForAgent.DeleteOldMissions();
                 //search for target in the area and create new missions if you find one relevante
@@ -68,7 +67,7 @@ namespace MossadAPI.Controllers
         [HttpPut("{id}/move")]
         public async Task<IActionResult> Move(Direction direction , int id)
         {
-            Agent? agent = _context.Agents.FirstOrDefault(agent => agent.ID == id);
+            Agent? agent = _context.Agents.Include(agent => agent.location).FirstOrDefault(agent => agent.ID == id);
             if (agent != null)
             {
                 //chack if the agent not already in active mission
@@ -76,7 +75,7 @@ namespace MossadAPI.Controllers
                 {
                     return NotFound("The Agent is in active mission");
                 }
-                Location? location = _context.Locations.FirstOrDefault(location => location.Id == agent.locationID);
+                Location? location = agent.location;
                 if (location != null)
                 {
                     Location tmpLocation = ChangeLocation.Move(direction, location);

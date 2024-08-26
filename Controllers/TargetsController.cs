@@ -23,12 +23,12 @@ namespace MossadAPI.Controllers
         [HttpPost]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        public IActionResult Create(Target target)
+        public async Task< IActionResult> Create(Target target)
         {
             target.status = StatusTarget.Live;
-            _context.Targets.Add(target);
-            _context.SaveChanges();
-            return Ok(target.ID);
+            await _context.Targets.AddAsync(target);
+            await _context.SaveChangesAsync();
+            return Ok(new { target.ID });
         }
 
         //get all targets
@@ -42,12 +42,11 @@ namespace MossadAPI.Controllers
         [HttpPut("{id}/pin")]
         public async Task<IActionResult> PutLocation(Location location, int id)
         {
-            Target? target = _context.Targets.FirstOrDefault(target => target.ID == id);
+            Target? target = _context.Targets.Include(target => target.location).FirstOrDefault(target => target.ID == id);
             if (target != null)
             {
+                target.location = location;
                 _context.Locations.Add(location);
-                _context.SaveChanges();
-                target.locationID = location.Id;
                 _context.SaveChanges();
                 //delete from DB old missions before create new mission
                 await MissionForTarget.DeleteOldMissions();
@@ -64,10 +63,10 @@ namespace MossadAPI.Controllers
         [HttpPut("{id}/move")]
         public async Task<IActionResult> Move(Direction direction, int id)
         {
-            Target? target = _context.Targets.FirstOrDefault(target => target.ID == id);
+            Target? target = _context.Targets.Include(target => target.location).FirstOrDefault(target => target.ID == id);
             if (target != null)
             {
-                Location? location = _context.Locations.FirstOrDefault(location => location.Id == target.locationID);
+                Location? location = target.location;
                 if (location != null)
                 {
                     Location tmpLocation = ChangeLocation.Move(direction, location);

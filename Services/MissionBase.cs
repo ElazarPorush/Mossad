@@ -15,31 +15,33 @@ namespace MossadAPI.Manegers
 
         public async Task DeleteOldMissions()
         {
-            foreach (Mission mission in _context.Missions)
+            var missions = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).Include(mission => mission.agent.location).Include(mission => mission.target.location).ToListAsync();
+            foreach (Mission mission in missions)
             {
-                Location? agentLocation = await _context.Locations.FindAsync(mission.agentID);
-                Location? targetLocation = await _context.Locations.FindAsync(mission.targetID);
+                Location? agentLocation = mission.agent.location;
+                Location? targetLocation = mission.target.location;
                 if (!IsNear(agentLocation, targetLocation))
                 {
                     _context.Missions.Remove(mission);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
                 }
             }
         }
 
         public async Task DeleteMissionIfIsNotRelevant(int id)
         {
-            Mission? theMission = await _context.Missions.FindAsync(id);
+            Mission? theMission = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).FirstOrDefaultAsync(mission => mission.Id == id);
             if (theMission != null)
             {
-                foreach (Mission mission in _context.Missions)
+                var missions = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).ToListAsync();
+                foreach (Mission mission in missions)
                 {
-                    if (theMission.agentID == mission.agentID || theMission.targetID == mission.targetID)
+                    if (theMission.agent.ID == mission.agent.ID || theMission.target.ID == mission.target.ID)
                     {
                         if (mission.Status == StatusMission.Assigned)
                         {
                             _context.Missions.Remove(mission);
-                            _context.SaveChanges();
+                            await _context.SaveChangesAsync();
                         }
                     }
                 }
@@ -63,23 +65,21 @@ namespace MossadAPI.Manegers
         {
             Mission mission = new Mission()
             {
-                agentID = agent.ID,
-                targetID = target.ID,
+                agent = agent,
+                target = target,
                 Status = StatusMission.Suggestion,
             };
-            _context.Missions.Add(mission);
-            _context.SaveChanges();
+            await _context.Missions.AddAsync(mission);
+            await _context.SaveChangesAsync();
             mission.TimeLeft = await PutTimeLeft(mission);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
         }
 
-        public async Task<bool> TheyMeet(int agentID, int targetID)
+        public async Task<bool> TheyMeet(Agent agent, Target target)
         {
-            Agent? agent = await _context.Agents.FindAsync(agentID);
-            Target? target = await _context.Targets.FindAsync(targetID);
-            Location? agentLocation = await _context.Locations.FindAsync(agent.locationID);
-            Location? targetLocation = await _context.Locations.FindAsync(target.locationID);
+            Location? agentLocation = agent.location;
+            Location? targetLocation = target.location;
             if (agentLocation.X == targetLocation.X && agentLocation.Y == targetLocation.Y)
             {
                 return true;
@@ -89,8 +89,8 @@ namespace MossadAPI.Manegers
 
         public async Task KillTarget(Mission mission)
         {
-            Agent? agent = await _context.Agents.FindAsync(mission.agentID);
-            Target? target = await _context.Targets.FindAsync(mission.targetID);
+            Agent? agent = mission.agent;
+            Target? target = mission.target;
             agent.status = StatusAgent.Dormant;
             target.status = StatusTarget.Eliminated;
             mission.Status = StatusMission.Completed;
@@ -99,18 +99,17 @@ namespace MossadAPI.Manegers
 
         public async Task<Double> PutTimeLeft(Mission mission)
         {
-            Agent? agent = await _context.Agents.FindAsync(mission.agentID);
-            Target? target = await _context.Targets.FindAsync(mission.targetID);
-            Location? agentLocation = await _context.Locations.FindAsync(agent.locationID);
-            Location? targetLocation = await _context.Locations.FindAsync(target.locationID);
+            Location? agentLocation = mission.agent.location;
+            Location? targetLocation = mission.target.location;
             return GetDistence(agentLocation, targetLocation);
         }
 
         public async Task<bool> IsAlreadyExicte(Agent agent , Target target)
         {
-            await foreach (Mission mission in  _context.Missions)
+            var missions = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).ToListAsync();
+            foreach (Mission mission in missions)
             {
-                if (mission.agentID == agent.ID && mission.targetID == target.ID)
+                if (mission.agent.ID == agent.ID && mission.target.ID == target.ID)
                 {
                     return true;
                 }

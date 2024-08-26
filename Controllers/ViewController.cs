@@ -11,12 +11,10 @@ namespace MossadAPI.Controllers
     [Route("/[controller]")]
     [ApiController]
     public class ViewController : ControllerBase
-    {
-        private readonly MossadDBContext _context;
+    { 
         private readonly ViewMissions _viewMissions;
-        public ViewController(MossadDBContext context, ViewMissions viewMissions)
+        public ViewController(ViewMissions viewMissions)
         {
-            _context = context;
             _viewMissions = viewMissions;
         }
 
@@ -44,6 +42,22 @@ namespace MossadAPI.Controllers
         {
             MossadView mossad = await _viewMissions.GetDetailsOfMossad();
             return Ok(mossad);
+        }
+
+        //get all details on agents
+        [HttpGet("agents")]
+        public async Task<IActionResult> GetAgents()
+        {
+            List<AgentView> agents = await _viewMissions.GetAgents();
+            return Ok(agents);
+        }
+
+        //get all details on targets
+        [HttpGet("targets")]
+        public async Task<IActionResult> GetTargets()
+        {
+            List<TargetView> targets = await _viewMissions.GetTargets();
+            return Ok(targets);
         }
     }
 }

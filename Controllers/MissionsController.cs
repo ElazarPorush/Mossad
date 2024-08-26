@@ -35,14 +35,14 @@ namespace MossadAPI.Controllers
         {
             await _missionManeger.DeleteOldMissions();
             await _missionManeger.DeleteMissionIfIsNotRelevant(id);
-            Mission ? mission = await _context.Missions.FindAsync(id);
+            Mission? mission = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).Include(mission => mission.agent.location).Include(mission => mission.target.location).FirstOrDefaultAsync(mission => mission.Id == id);
             if (mission == null)
             {
                 return NotFound("The mission is not relevant");
             }
             mission.TimeLeft = await _missionManeger.PutTimeLeft(mission);
             mission.Status = StatusMission.Assigned;
-            Agent? agent = await _context.Agents.FindAsync(mission.agentID);
+            Agent? agent = mission.agent;
             agent.status = StatusAgent.InActivity;
             _context.SaveChanges();
             return Ok(mission);
@@ -51,13 +51,13 @@ namespace MossadAPI.Controllers
         [HttpPost("update")]
         public async Task<IActionResult> UpdateMissions()
         {
-            var missions = await _context.Missions.ToListAsync();
+            var missions = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).Include(mission => mission.agent.location).Include(mission => mission.target.location).ToListAsync();
             foreach (Mission mission in missions)
             { 
                 if (mission.Status == StatusMission.Assigned)
                 {
                     mission.TimeLeft = await _missionManeger.PutTimeLeft(mission);
-                    if (await _missionManeger.TheyMeet(mission.agentID, mission.targetID))
+                    if (await _missionManeger.TheyMeet(mission.agent, mission.target))
                     {
                         await _missionManeger.KillTarget(mission);
                         _context.SaveChanges();
@@ -65,10 +65,8 @@ namespace MossadAPI.Controllers
                     }
                     else
                     {
-                        Agent? agent = await _context.Agents.FindAsync(mission.agentID);
-                        Target? target = await _context.Targets.FindAsync(mission.targetID);
-                        Location? agentLocation = await _context.Locations.FindAsync(agent.locationID);
-                        Location? targetLocation = await _context.Locations.FindAsync(target.locationID);
+                        Location? agentLocation = mission.agent.location;
+                        Location? targetLocation = mission.target.location;
                         Location tmpLocation = ChangeLocation.GoToTarget(agentLocation, targetLocation);
                         agentLocation.X = tmpLocation.X;
                         agentLocation.Y = tmpLocation.Y;

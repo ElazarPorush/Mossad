@@ -9,6 +9,6 @@
         public int TotalMissions { get; set; }
         public int TotalMissionsActivate { get;set; }
         public double AgentsToTargets { get; set; }
-        public double SuggestionsAgentsToTargets { get;set; }
+        public double SAgentsToTargets { get;set; }
     }
 }

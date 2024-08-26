@@ -15,11 +15,12 @@ namespace MossadAPI.Manegers
 
         public async Task SearchMissions(Target target)
         {
-            Location? targetLocation = await _context.Locations.FindAsync(target.locationID);
-            foreach (Agent agent in _context.Agents)
+            Location? targetLocation = target.location;
+            var agents = await _context.Agents.Include(agent => agent.location).ToListAsync();
+            foreach (Agent agent in agents)
             {
                 if (targetLocation == null) { break; }
-                Location? agentLocation = await _context.Locations.FindAsync(agent.locationID);
+                Location? agentLocation = agent.location;
                 if (agentLocation == null)
                 {
                     continue;
@@ -35,9 +36,10 @@ namespace MossadAPI.Manegers
         }
         private async Task<bool> IsAvailble(Agent agent)
         {
-            foreach (Mission mission in _context.Missions)
+            var missions = await _context.Missions.Include(mission => mission.agent).ToListAsync();
+            foreach (Mission mission in missions)
             {
-                if (mission.agentID == agent.ID && mission.Status != StatusMission.Suggestion || agent.status == StatusAgent.InActivity)
+                if (mission.agent.ID == agent.ID && mission.Status != StatusMission.Suggestion || agent.status == StatusAgent.InActivity)
                 {
                     return false;
                 }
