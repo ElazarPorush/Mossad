@@ -25,11 +25,6 @@ namespace MossadAPI.Manegers
                     _context.Missions.Remove(missions[i]);
                     await _context.SaveChangesAsync();
                 }
-                if (missions[i].target.status == StatusTarget.Eliminated)
-                {
-                    _context.Missions.Remove(missions[i]);
-                    await _context.SaveChangesAsync();
-                }
             }
         }
 
