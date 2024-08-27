@@ -18,7 +18,7 @@ namespace MossadAPI.Services
         public async Task<List<SuggestionView>> GetSuggestions()
         {
             List<SuggestionView> suggestions = new List<SuggestionView>();
-            var missions = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).Include(mission => mission.agent.location).Include(mission => mission.target.location).ToListAsync();
+            var missions = await _context.Missions.Include(mission => mission.agent).ThenInclude(agent => agent.location).Include(mission => mission.target).ThenInclude(target => target.location).ToListAsync();
             foreach (Mission mission in missions)
             {
                 if (mission.Status == StatusMission.Suggestion)
@@ -44,7 +44,7 @@ namespace MossadAPI.Services
 
         public async Task<SuggestionView> GetSuggestionsByID(int id)
         {
-            Mission? mission = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).Include(mission => mission.agent.location).Include(mission => mission.target.location).FirstOrDefaultAsync(mission => mission.Id == id);
+            Mission? mission = await _context.Missions.Include(mission => mission.agent).ThenInclude(agent => agent.location).Include(mission => mission.target).ThenInclude(target => target.location).FirstOrDefaultAsync(mission => mission.Id == id);
             if (mission == null) { return null; }
 
             Location? agentLocation = mission.agent.location;

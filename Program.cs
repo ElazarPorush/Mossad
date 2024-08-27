@@ -13,7 +13,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<MossadDBContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<MossadDBContext>(options => options.UseSqlServer(connectionString).UseValidationCheckConstraints());
 
 builder.Services.AddScoped<MissionForAgent>();
 builder.Services.AddScoped<MissionForTarget>();

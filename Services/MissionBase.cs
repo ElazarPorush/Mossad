@@ -15,12 +15,17 @@ namespace MossadAPI.Manegers
 
         public async Task DeleteOldMissions()
         {
-            var missions = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).Include(mission => mission.agent.location).Include(mission => mission.target.location).ToListAsync();
+            var missions = await _context.Missions.Include(mission => mission.agent).ThenInclude(agent => agent.location).Include(mission => mission.target).ThenInclude(target => target.location).ToListAsync();
             for (int i = 0; i < missions.Count; i++)
             {
                 Location? agentLocation = missions[i].agent.location;
                 Location? targetLocation = missions[i].target.location;
                 if (!IsNear(agentLocation, targetLocation))
+                {
+                    _context.Missions.Remove(missions[i]);
+                    await _context.SaveChangesAsync();
+                }
+                if (missions[i].target.status == StatusTarget.Eliminated)
                 {
                     _context.Missions.Remove(missions[i]);
                     await _context.SaveChangesAsync();
@@ -36,20 +41,15 @@ namespace MossadAPI.Manegers
                 var missions = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).ToListAsync();
                 for (int i = 0; i < missions.Count; i++)
                 {
-                    if (theMission.agent.ID == missions[i].agent.ID || theMission.target.ID == missions[i].target.ID)
+                    if (theMission.agent.ID == missions[i].agent.ID ^ theMission.target.ID == missions[i].target.ID)
                     {
                         if (missions[i].Status == StatusMission.Suggestion)
                         {
                             _context.Missions.Remove(missions[i]);
                             await _context.SaveChangesAsync();
                         }
-                        else
-                        {
-                            _context.Missions.Remove(theMission);
-                            await _context.SaveChangesAsync();
-                            break;
-                        }
                     }
+                    
                 }
             }
         }

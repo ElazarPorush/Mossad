@@ -35,7 +35,7 @@ namespace MossadAPI.Controllers
         {
             await _missionManeger.DeleteOldMissions();
             await _missionManeger.DeleteMissionIfIsNotRelevant(id);
-            Mission? mission = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).Include(mission => mission.agent.location).Include(mission => mission.target.location).FirstOrDefaultAsync(mission => mission.Id == id);
+            Mission? mission = await _context.Missions.Include(mission => mission.agent).ThenInclude(agent => agent.location).Include(mission => mission.target).ThenInclude(target => target.location).FirstOrDefaultAsync(mission => mission.Id == id);
             if (mission == null)
             {
                 return NotFound("The mission is not relevant");
@@ -51,7 +51,7 @@ namespace MossadAPI.Controllers
         [HttpPost("update")]
         public async Task<IActionResult> UpdateMissions()
         {
-            var missions = await _context.Missions.Include(mission => mission.agent).Include(mission => mission.target).Include(mission => mission.agent.location).Include(mission => mission.target.location).ToListAsync();
+            var missions = await _context.Missions.Include(mission => mission.agent).ThenInclude(agent => agent.location).Include(mission => mission.target).ThenInclude(target => target.location).ToListAsync();
             foreach (Mission mission in missions)
             { 
                 if (mission.Status == StatusMission.Assigned)

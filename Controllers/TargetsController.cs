@@ -70,10 +70,13 @@ namespace MossadAPI.Controllers
                 if (location != null)
                 {
                     Location tmpLocation = ChangeLocation.Move(direction, location);
-                    location.X = tmpLocation.X;
-                    location.Y = tmpLocation.Y;
-                    _context.Update(location);
-                    _context.SaveChanges();
+                    if (target.status != StatusTarget.Eliminated)
+                    {
+                        location.X = tmpLocation.X;
+                        location.Y = tmpLocation.Y;
+                        _context.Update(location);
+                        _context.SaveChanges();
+                    }
                     await MissionForTarget.DeleteOldMissions();
                     await MissionForTarget.SearchMissions(target);
                     return Ok();

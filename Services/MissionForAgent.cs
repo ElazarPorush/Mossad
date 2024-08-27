@@ -42,7 +42,7 @@ namespace MossadAPI.Manegers
             var missions = await _context.Missions.Include(mission => mission.target).ToListAsync();
             foreach (Mission mission in missions)
             {
-                if (mission.target.ID == target.ID && mission.Status != StatusMission.Suggestion || target.status == StatusTarget.Eliminated)
+                if ((mission.target.ID == target.ID && mission.Status != StatusMission.Suggestion) || target.status == StatusTarget.Eliminated)
                 {
                     return false;
                 }
